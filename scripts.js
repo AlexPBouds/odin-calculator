@@ -4,7 +4,32 @@ const answerText = document.getElementsByClassName("answer")[0];
 
 // Functions
 function backspace() {
-  console.log("Will remove a digit or operation from the equation");
+  // If equation is currently 0, do nothing
+  if (equationText.innerText === "0") {
+    return;
+  }
+
+  // If equation is currently a single digit, set to 0
+  if (
+    Number.isInteger(Number(equationText.innerText)) &&
+    Number(equationText.innerText) < 10
+  ) {
+    equationText.innerText = "0";
+    return;
+  }
+
+  // If last value in string is a space, remove the operator
+  let lastIndex = equationText.innerText.length - 1;
+  let newEquation = "";
+  if (isSpace(equationText.innerText[lastIndex])) {
+    newEquation = equationText.innerText.slice(0, -3);
+    equationText.innerText = newEquation;
+    return;
+  }
+
+  // Remove the last value of the string
+  newEquation = equationText.innerText.slice(0, -1);
+  equationText.innerText = newEquation;
 }
 
 function clearAll() {
@@ -26,4 +51,8 @@ function addOperation() {
 
 function operate() {
   console.log("Will calculate the result of the equation and display it");
+}
+
+function isSpace(char) {
+  return / /.test(char);
 }
