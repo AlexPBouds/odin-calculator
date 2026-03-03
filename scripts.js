@@ -8,7 +8,8 @@ function backspace() {
 }
 
 function clearAll() {
-  console.log("Will clear the equation");
+  equationText.innerText = "0";
+  answerText.innerText = "0";
 }
 
 function modulo() {
