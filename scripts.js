@@ -1,3 +1,8 @@
+// HTML Elements
+const equationText = document.getElementsByClassName("equation")[0];
+const answerText = document.getElementsByClassName("answer")[0];
+
+// Functions
 function backspace() {
   console.log("Will remove a digit or operation from the equation");
 }
