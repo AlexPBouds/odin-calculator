@@ -7,6 +7,52 @@
     <title>Odin - Calculator</title>
   </head>
   <body>
+    <div class="calculator-container">
+      <div class="input-screen">
+        <div class="equation"></div>
+        <div class="answer"></div>
+      </div>
+
+      <div class="buttons">
+        <div class="row">
+          <button type="button" class="top" onclick="backspace()">
+            <img src="./images/backspace.png" alt="Backspace Icon bu Apien"></a>
+          </button>
+          <button type="button" class="top" onclick="clearAll()">C</button>
+          <button type="button" class="top" onclick="modulo()">%</button>
+          <button type="button" class="operations" onclick="addOperation('divide')">÷</button>
+        </div>
+
+        <div class="row">
+          <button type="button" class="numbers" onclick="addNumber(7)">7</button>
+          <button type="button" class="numbers" onclick="addNumber(8)">8</button>
+          <button type="button" class="numbers" onclick="addNumber(9)">9</button>
+          <button type="button" class="operations" onclick="addOperation('multiply')">×</button>
+        </div>
+
+        <div class="row">
+          <button type="button" class="numbers" onclick="addNumber(4)">4</button>
+          <button type="button" class="numbers" onclick="addNumber(5)">5</button>
+          <button type="button" class="numbers" onclick="addNumber(6)">6</button>
+          <button type="button" class="operations" onclick="addOperation('subtract')">-</button>
+        </div>
+
+        <div class="row">
+          <button type="button" class="numbers" onclick="addNumber(1)">1</button>
+          <button type="button" class="numbers" onclick="addNumber(2)">2</button>
+          <button type="button" class="numbers" onclick="addNumber(3)">3</button>
+          <button type="button" class="operations" onclick="addOperation('add')">+</button>
+        </div>
+
+        <div class="row">
+          <button type="button" class="numbers" onclick="addOperation('negative')">+/-</button>
+          <button type="button" class="numbers" onclick="addNumber(0)">0</button>
+          <button type="button" class="numbers" onclick="addOperation('decimal')">.</button>
+          <button type="button" class="equals" onclick="operate()">=</button>
+        </div>
+      </div>
+    </div>
+
     <script src="./scripts.js"></script>
   </body>
 </html>
