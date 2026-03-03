@@ -36,6 +36,14 @@ body {
 
 .equation {
   color: rgb(179, 179, 179);
+  white-space: no-wrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+}
+
+.equation::-webkit-scrollbar {
+  display: none;
 }
 
 .answer {

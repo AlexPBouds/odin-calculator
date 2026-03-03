@@ -2,6 +2,12 @@
 const equationText = document.getElementsByClassName("equation")[0];
 const answerText = document.getElementsByClassName("answer")[0];
 
+// Event Listeners
+equationText.addEventListener("wheel", (event) => {
+  event.preventDefault();
+  equationText.scrollLeft += event.deltaY;
+});
+
 // Functions
 function backspace() {
   // If equation is currently 0, do nothing
@@ -42,10 +48,24 @@ function modulo() {
 }
 
 function addNumber(number) {
-  console.log("Will add the number to the equation");
+  // If equation is currently 0, replace it with the number
+  if (equationText.innerText === "0") {
+    equationText.innerText = `${number}`;
+    return;
+  }
+
+  // Simply add the number
+  const newText = `${equationText.innerText}${number}`;
+  equationText.innerText = newText;
+
+  // If adding a character would make make the div need to scroll
+  // Then scroll to the left
+  if (newText.length > 23) {
+    autoScrollEquation();
+  }
 }
 
-function addOperation() {
+function addOperation(operation) {
   console.log("Will add the operator to the equation");
 }
 
@@ -55,4 +75,8 @@ function operate() {
 
 function isSpace(char) {
   return / /.test(char);
+}
+
+function autoScrollEquation() {
+  equationText.scrollLeft = equationText.scrollWidth;
 }
