@@ -36,7 +36,7 @@ body {
 
 .equation {
   color: rgb(179, 179, 179);
-  white-space: no-wrap;
+  white-space: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
@@ -47,7 +47,7 @@ body {
 }
 
 .answer {
-  font-size: 30px;
+  font-size: 24px;
 }
 
 .buttons {

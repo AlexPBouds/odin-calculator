@@ -19,7 +19,7 @@
             <img src="./images/backspace.png" alt="Backspace Icon bu Apien"></a>
           </button>
           <button type="button" class="numbers" onclick="clearAll()">C</button>
-          <button type="button" class="numbers" onclick="modulo()">%</button>
+          <button type="button" class="numbers" onclick="addOperation('modulo')">%</button>
           <button type="button" class="operations" onclick="addOperation('divide')">÷</button>
         </div>
 
@@ -47,7 +47,7 @@
         <div class="row">
           <button type="button" class="numbers" onclick="addOperation('negative')">+/-</button>
           <button type="button" class="numbers" onclick="addNumber(0)">0</button>
-          <button type="button" class="numbers" onclick="addOperation('decimal')">.</button>
+          <button type="button" class="numbers" onclick="addDecimal()">.</button>
           <button type="button" class="equals" onclick="operate()">=</button>
         </div>
       </div>
