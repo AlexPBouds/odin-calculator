@@ -1,7 +1,6 @@
 /*
   *** TO-DO ***
-  - Implement positive/negative
-  - Implement keyboard support
+  - Clean code
 */
 
 // HTML Elements
@@ -12,6 +11,75 @@ const answerText = document.getElementsByClassName("answer")[0];
 equationText.addEventListener("wheel", (event) => {
   event.preventDefault();
   equationText.scrollLeft += event.deltaY;
+});
+
+document.addEventListener("keydown", (event) => {
+  const key = event.key;
+
+  // Prevent page scrolling with spacebar
+  if (key === " ") {
+    event.preventDefault();
+  }
+
+  // -------------------------
+  // NUMBERS (0–9)
+  // -------------------------
+  if (/^\d$/.test(key)) {
+    addNumber(Number(key));
+    return;
+  }
+
+  // -------------------------
+  // OPERATORS
+  // -------------------------
+  switch (key) {
+    case "+":
+      addOperation("add");
+      return;
+
+    case "-":
+      addOperation("subtract");
+      return;
+
+    case "*":
+      addOperation("multiply");
+      return;
+
+    case "/":
+      event.preventDefault(); // prevent Quick Find in some browsers
+      addOperation("divide");
+      return;
+
+    case "%":
+      addOperation("modulo");
+      return;
+  }
+
+  // -------------------------
+  // DECIMAL
+  // -------------------------
+  if (key === ".") {
+    addDecimal();
+    return;
+  }
+
+  // -------------------------
+  // BACKSPACE
+  // -------------------------
+  if (key === "Backspace") {
+    event.preventDefault(); // prevent browser navigating back
+    backspace();
+    return;
+  }
+
+  // -------------------------
+  // EQUALS
+  // -------------------------
+  if (key === "Enter" || key === "=") {
+    event.preventDefault();
+    operate();
+    return;
+  }
 });
 
 // Functions
