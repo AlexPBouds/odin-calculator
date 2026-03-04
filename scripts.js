@@ -1,13 +1,27 @@
-/*
-  *** TO-DO ***
-  - Clean code
-*/
+// ===============================
+// Constants
+// ===============================
+const MAX_LENGTH_BEFORE_SCROLL = 23;
+const MAX_LENGTH_DECIMAL = 15;
+const MAX_EXPONENTIAL = 6;
 
+const OPERATORS = {
+  "+": (a, b) => a + b,
+  "-": (a, b) => a - b,
+  "×": (a, b) => a * b,
+  "÷": (a, b) => a / b,
+  "%": (a, b) => a % b,
+};
+
+// ===============================
 // HTML Elements
+// ===============================
 const equationText = document.getElementsByClassName("equation")[0];
 const answerText = document.getElementsByClassName("answer")[0];
 
+// ===============================
 // Event Listeners
+// ===============================
 equationText.addEventListener("wheel", (event) => {
   event.preventDefault();
   equationText.scrollLeft += event.deltaY;
@@ -16,65 +30,49 @@ equationText.addEventListener("wheel", (event) => {
 document.addEventListener("keydown", (event) => {
   const key = event.key;
 
-  // Prevent page scrolling with spacebar
   if (key === " ") {
     event.preventDefault();
   }
 
-  // -------------------------
-  // NUMBERS (0–9)
-  // -------------------------
   if (/^\d$/.test(key)) {
     addNumber(Number(key));
     return;
   }
 
-  // -------------------------
-  // OPERATORS
-  // -------------------------
   switch (key) {
     case "+":
-      addOperation("add");
+      addOperation("+");
       return;
 
     case "-":
-      addOperation("subtract");
+      addOperation("-");
       return;
 
     case "*":
-      addOperation("multiply");
+      addOperation("×");
       return;
 
     case "/":
-      event.preventDefault(); // prevent Quick Find in some browsers
-      addOperation("divide");
+      event.preventDefault();
+      addOperation("÷");
       return;
 
     case "%":
-      addOperation("modulo");
+      addOperation("%");
       return;
   }
 
-  // -------------------------
-  // DECIMAL
-  // -------------------------
   if (key === ".") {
     addDecimal();
     return;
   }
 
-  // -------------------------
-  // BACKSPACE
-  // -------------------------
   if (key === "Backspace") {
-    event.preventDefault(); // prevent browser navigating back
+    event.preventDefault();
     backspace();
     return;
   }
 
-  // -------------------------
-  // EQUALS
-  // -------------------------
   if (key === "Enter" || key === "=") {
     event.preventDefault();
     operate();
@@ -82,397 +80,185 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-// Functions
+// ===============================
+// Core Functions
+// ===============================
 function backspace() {
-  let newText = equationText.innerText;
+  let text = getText();
+  if (text === "0") return;
 
-  if (newText === "0") return;
+  const { left, operator, right } = parseEquation();
 
-  // Split around operator (only one operator allowed in your calculator)
-  let operator = "";
-  let operatorIndex = -1;
-
-  for (let i = 0; i < newText.length; i++) {
-    if (isOperator(newText[i], i)) {
-      operator = newText[i];
-      operatorIndex = i;
-      break;
-    }
-  }
-
-  // -----------------------------
-  // NO OPERATOR (single number)
-  // -----------------------------
-  if (operator === "") {
-    // If single digit or negative single digit → reset to 0
-    if (/^-?\d$/.test(newText)) {
-      equationText.innerText = "0";
-      return;
-    }
-
-    // Remove last character
-    newText = newText.slice(0, -1);
-
-    // If result is "-" or empty → reset to 0
-    if (newText === "" || newText === "-") {
-      equationText.innerText = "0";
-      return;
-    }
-
-    equationText.innerText = newText;
+  if (!operator) {
+    const newText = text.slice(0, -1);
+    setText(newText === "" || newText === "-" ? "0" : newText);
     return;
   }
 
-  // -----------------------------
-  // HAS OPERATOR
-  // -----------------------------
-
-  let leftText = newText.slice(0, operatorIndex);
-  let rightText = newText.slice(operatorIndex + 2); // skip "operator "
-
-  // If there's no right number yet → remove operator
-  if (rightText === "") {
-    equationText.innerText = leftText;
+  if (!right) {
+    setText(left);
     return;
   }
 
-  // If right side is single digit or negative single digit → reset to 0
-  if (/^-?\d$/.test(rightText)) {
-    equationText.innerText = `${leftText} ${operator}`;
-    return;
-  }
-
-  // Otherwise remove last digit from right side
-  rightText = rightText.slice(0, -1);
-
-  // If right becomes "-" or empty → convert to 0
-  if (rightText === "" || rightText === "-") {
-    rightText = "0";
-  }
-
-  equationText.innerText = `${leftText} ${operator} ${rightText}`;
+  const newRight = right.slice(0, -1);
+  setText(
+    newRight === "" || newRight === "-"
+      ? `${left} ${operator}`
+      : `${left} ${operator} ${newRight}`,
+  );
 }
 
 function clearAll() {
-  equationText.innerText = "0";
+  setText("0");
   answerText.innerText = "0";
 }
 
 function addNumber(number) {
-  // If equation is currently 0, replace it with the number
-  if (equationText.innerText === "0") {
-    equationText.innerText = `${number}`;
+  let text = getText();
+  if (text === "0") {
+    setText(String(number));
     return;
   }
 
-  // If last character is an operator, add a space
-  let newText = equationText.innerText;
+  const { left, operator, right } = parseEquation();
 
-  const lastIndex = equationText.innerText.length - 1;
-  if (isOperator(equationText.innerText[lastIndex])) {
-    newText = `${equationText.innerText} `;
+  if (!operator) {
+    setText(text + number);
+    return;
   }
 
-  // Don't add pointless 0's
-  let operator = "";
-  let operatorIndex = 0;
-  let pointlessZero = false;
-  for (let i = 0; i < equationText.innerText.length; i++) {
-    if (isOperator(equationText.innerText[i], i)) {
-      operator = equationText.innerText[i];
-      operatorIndex = i;
-      break;
-    }
+  if (right === "0") {
+    if (number === 0) return;
+    setText(`${left} ${operator} ${number}`);
+    return;
   }
 
-  // If there is an operator, look at next number
-  if (operator !== "") {
-    let leftSideNumber = equationText.innerText.slice(
-      operatorIndex + 1,
-      equationText.innerText.length,
-    );
-
-    if (leftSideNumber.replaceAll(" ", "") === "0") {
-      if (number === 0) {
-        return;
-      }
-
-      newText = equationText.innerText.slice(0, -1);
-    }
+  if (right === "") {
+    setText(`${text} ${number}`);
+    return;
   }
 
-  // Simply add the number
-
-  equationText.innerText = `${newText}${number}`;
-
-  // If adding a character would make make the div need to scroll
-  // Then scroll to the left
-  if (newText.length > 23) {
-    autoScrollEquation();
-  }
+  setText(text + number);
 }
 
 function addOperation(operation) {
-  // Check if valid to place an operation
   if (!isValidOperation()) {
     return;
   }
 
-  // If there's already an operation in the equation, operate first
   if (hasOperator()) {
     operate();
   }
 
-  let newText = equationText.innerText;
-
-  // Add the corresponding operation to equation
-  switch (operation) {
-    case "modulo":
-      newText = `${newText} %`;
-      equationText.innerText = newText;
-      break;
-
-    case "divide":
-      equationText.innerText = `${newText} ÷`;
-      break;
-
-    case "multiply":
-      equationText.innerText = `${newText} ×`;
-      break;
-
-    case "subtract":
-      equationText.innerText = `${newText} -`;
-      break;
-
-    case "add":
-      equationText.innerText = `${newText} +`;
-      break;
-
-    default:
-      break;
-  }
-
-  // If adding a character would make make the div need to scroll
-  // Then scroll to the left
-  if (equationText.innerText.length > 23) {
-    autoScrollEquation();
-  }
+  setText(`${getText()} ${operation}`);
 }
 
 function operate() {
-  // Find the operator
-  let operator = "";
-  let operatorIndex = 0;
-  let nextDigitIndex = 0;
-  for (let i = 0; i < equationText.innerText.length; i++) {
-    if (isOperator(equationText.innerText[i], i)) {
-      operator = equationText.innerText[i];
-      operatorIndex = i;
-      nextDigitIndex = i + 2;
-      break;
-    }
-  }
+  const { left, operator, right } = parseEquation();
 
-  // If no operator is found, simply display the number
-  if (operator === "") {
-    answerText.innerText = formatNumber(equationText.innerText);
+  if (!operator) {
+    answerText.innerText = formatNumber(left);
     return;
   }
 
-  // If we're dividing, make sure it's not by 0
-  if (operator === "÷") {
-    if (
-      equationText.innerText[nextDigitIndex] === "0" &&
-      nextDigitIndex === equationText.innerText.length - 1
-    ) {
-      answerText.innerText = "Can't divide by 0!";
-      return;
-    }
+  if (operator === "÷" && Number(right) === 0) {
+    answerText.innerText = "Can't divide by 0!";
+    return;
   }
 
-  // Replace division/multiplication symbols
-  switch (operator) {
-    case "÷":
-      equationText.innerText[operatorIndex] = "/";
-      break;
+  const result = OPERATORS[operator](Number(left), Number(right));
 
-    case "×":
-      equationText.innerText[operatorIndex] = "*";
-      break;
-
-    default:
-      break;
-  }
-
-  // Evaluate the equation
-  let firstNumber = Number(equationText.innerText.slice(0, operatorIndex));
-  let secondNumber = Number(
-    equationText.innerText.slice(
-      operatorIndex + 1,
-      equationText.innerText.length,
-    ),
-  );
-
-  let result = 0;
-
-  switch (operator) {
-    case "%":
-      result = firstNumber % secondNumber;
-      break;
-
-    case "÷":
-      result = firstNumber / secondNumber;
-      break;
-
-    case "×":
-      result = firstNumber * secondNumber;
-      break;
-
-    case "-":
-      result = firstNumber - secondNumber;
-      break;
-
-    case "+":
-      result = firstNumber + secondNumber;
-      break;
-
-    default:
-      break;
-  }
-
-  equationText.innerText = `${result}`;
-  answerText.innerText = `${formatNumber(result)}`;
+  setText(String(result));
+  answerText.innerText = formatNumber(result);
 }
 
 function addDecimal() {
-  // Divide into left and right portions of the equation
-  let operator = "";
-  let leftSide = "";
-  let leftSideDecimal = false;
-  let rightSide = "";
-  let rightSideDecimal = false;
+  const { left, operator, right } = parseEquation();
 
-  for (let i = 0; i < equationText.innerText.length; i++) {
-    if (isOperator(equationText.innerText[i], i)) {
-      operator = equationText.innerText[i];
-    } else if (operator === "") {
-      if (equationText.innerText[i] === ".") {
-        leftSideDecimal = true;
-      }
+  if (!operator) {
+    if (!left.includes(".")) {
+      setText(getText() + ".");
+    }
 
-      leftSide += equationText.innerText[i];
+    return;
+  }
+
+  if (!right.includes(".")) {
+    if (right === "") {
+      setText(`${left} ${operator} 0.`);
     } else {
-      if (equationText.innerText[i] === ".") {
-        rightSideDecimal = true;
-      }
-
-      rightSide += equationText.innerText[i];
+      setText(getText() + ".");
     }
-  }
-
-  // If left side and no decimal, add decimal
-  if (operator === "" && leftSideDecimal === false) {
-    newText = equationText.innerText;
-    equationText.innerText = `${newText}.`;
-
-    if (equationText.innerText.length > 23) {
-      autoScrollEquation();
-    }
-    return;
-  }
-
-  // If right side and no decimal, add decimal
-  if (operator !== "" && rightSideDecimal === false) {
-    newText = equationText.innerText;
-
-    // If no values yet on right side, add a 0
-    if (rightSide === "") {
-      newText += " 0";
-    }
-
-    equationText.innerText = `${newText}.`;
-
-    if (equationText.innerText.length > 23) {
-      autoScrollEquation();
-    }
-    return;
   }
 }
 
 function toggleSign() {
-  let newText = equationText.innerText;
+  const { left, operator, right } = parseEquation();
 
-  // If currently 0, just make it negative
-  if (newText === "0") {
-    equationText.innerText = "-0";
+  if (!operator) {
+    setText(left.startsWith("-") ? left.slice(1) : `-${left}`);
     return;
   }
 
-  // Find operator
-  let operator = "";
-  let operatorIndex = -1;
+  if (!right) {
+    setText(`${left} ${operator} -0`);
+    return;
+  }
 
-  for (let i = 0; i < newText.length; i++) {
-    if (isOperator(newText[i], i)) {
-      operator = newText[i];
-      operatorIndex = i;
-      break;
+  const toggled = right.startsWith("-") ? right.slice(1) : `-${right}`;
+
+  setText(`${left} ${operator} ${toggled}`);
+}
+
+// ===============================
+// Utilities
+// ===============================
+function getText() {
+  return equationText.innerText;
+}
+
+function setText(text) {
+  equationText.innerText = text;
+  if (text.length > MAX_LENGTH_BEFORE_SCROLL) {
+    autoScrollEquation();
+  }
+}
+
+function parseEquation() {
+  const text = getText().trim();
+
+  for (let i = 0; i < text.length; i++) {
+    if (isOperator(text[i], i)) {
+      return {
+        left: text.slice(0, i).trim(),
+        operator: text[i],
+        right: text.slice(i + 1).trim(),
+        operatorIndex: i,
+      };
     }
   }
 
-  // If no operator, then toggle whole number
-  if (operator === "") {
-    if (newText.startsWith("-")) {
-      equationText.innerText = newText.slice(1);
-    } else {
-      equationText.innerText = `-${newText}`;
-    }
-    return;
-  }
-
-  // Split into left and right parts
-  let leftText = newText.slice(0, operatorIndex);
-  let rightText = newText.slice(operatorIndex + 2);
-
-  // If no right number yet, toggle 0
-  if (rightText === "") {
-    equationText.innerText = `${leftText} ${operator} -0`;
-    return;
-  }
-
-  // Toggle right number
-  if (rightText.startsWith("-")) {
-    rightText = rightText.slice(1);
-  } else {
-    rightText = "-" + rightText;
-  }
-
-  equationText.innerText = `${leftText} ${operator} ${rightText}`;
+  // If we don't find an operator, we only have a left
+  return {
+    left: text,
+    operator: "",
+    right: "",
+    operatorIndex: -1,
+  };
 }
 
 function hasOperator() {
-  for (let i = 0; i < equationText.innerText.length; i++) {
-    if (isOperator(equationText.innerText[i], i)) {
-      return true;
-    }
-  }
-
-  return false;
+  return parseEquation().operator !== "";
 }
 
 function isOperator(char, index = -1) {
-  if (
+  return (
     char === "%" ||
     char === "÷" ||
     char === "×" ||
-    (char === "-" && index !== 0) ||
-    char === "+" // ||
-    //isSpace(char)
-  ) {
-    return true;
-  }
-
-  return false;
+    char === "+" ||
+    (char === "-" && index !== 0)
+  );
 }
 
 function autoScrollEquation() {
@@ -480,18 +266,15 @@ function autoScrollEquation() {
 }
 
 function isValidOperation() {
-  const lastIndex = equationText.innerText.length - 1;
+  const text = getText();
+  const lastChar = text[text.length - 1];
 
-  if (
-    equationText.innerText[lastIndex] === "." ||
-    isOperator(equationText.innerText[lastIndex])
-  ) {
-    return false;
-  }
-
-  return true;
+  return !(lastChar === "." || isOperator(lastChar));
 }
 
+// ===============================
+// Formatting
+// ===============================
 function formatNumber(number) {
   // Make sure the number is a valid number
   number = Number(number);
@@ -499,31 +282,26 @@ function formatNumber(number) {
     return number;
   }
 
-  // Convert number to a string
-  let string = number.toString();
-
-  //
-
   if (!Number.isInteger(number)) {
-    return limitDecimalLength(number, 15);
+    return limitDecimalLength(number, MAX_LENGTH_DECIMAL);
   }
 
-  if (string.length > 15) {
-    return number.toExponential(6);
+  const string = number.toString();
+  if (string.length > MAX_LENGTH_DECIMAL) {
+    return number.toExponential(MAX_EXPONENTIAL);
   }
 
   return string;
 }
 
-function limitDecimalLength(number, maxTotalLength) {
+function limitDecimalLength(number, maxLength) {
   let string = number.toString();
 
   if (!string.includes(".")) return number;
-
-  if (string.length <= maxTotalLength) return number;
+  if (string.length <= maxLength) return number;
 
   const integerLength = string.split(".")[0].length;
-  const allowedDecimals = Math.max(maxTotalLength - integerLength - 1, 0);
+  const allowedDecimals = Math.max(maxLength - integerLength - 1, 0);
 
   return Number(number.toFixed(allowedDecimals));
 }
