@@ -16,32 +16,73 @@ equationText.addEventListener("wheel", (event) => {
 
 // Functions
 function backspace() {
-  // If equation is currently 0, do nothing
-  if (equationText.innerText === "0") {
+  let newText = equationText.innerText;
+
+  if (newText === "0") return;
+
+  // Split around operator (only one operator allowed in your calculator)
+  let operator = "";
+  let operatorIndex = -1;
+
+  for (let i = 0; i < newText.length; i++) {
+    if (isOperator(newText[i], i)) {
+      operator = newText[i];
+      operatorIndex = i;
+      break;
+    }
+  }
+
+  // -----------------------------
+  // NO OPERATOR (single number)
+  // -----------------------------
+  if (operator === "") {
+    // If single digit or negative single digit → reset to 0
+    if (/^-?\d$/.test(newText)) {
+      equationText.innerText = "0";
+      return;
+    }
+
+    // Remove last character
+    newText = newText.slice(0, -1);
+
+    // If result is "-" or empty → reset to 0
+    if (newText === "" || newText === "-") {
+      equationText.innerText = "0";
+      return;
+    }
+
+    equationText.innerText = newText;
     return;
   }
 
-  // If equation is currently a single digit, set to 0
-  if (
-    Number.isInteger(Number(equationText.innerText)) &&
-    Number(equationText.innerText) < 10
-  ) {
-    equationText.innerText = "0";
+  // -----------------------------
+  // HAS OPERATOR
+  // -----------------------------
+
+  let leftText = newText.slice(0, operatorIndex);
+  let rightText = newText.slice(operatorIndex + 2); // skip "operator "
+
+  // If there's no right number yet → remove operator
+  if (rightText === "") {
+    equationText.innerText = leftText;
     return;
   }
 
-  // If last value in string is a space, remove the operator
-  const lastIndex = equationText.innerText.length - 1;
-  let newEquation = "";
-  if (isOperator(equationText.innerText[lastIndex])) {
-    newEquation = equationText.innerText.slice(0, -2);
-    equationText.innerText = newEquation;
+  // If right side is single digit or negative single digit → reset to 0
+  if (/^-?\d$/.test(rightText)) {
+    equationText.innerText = `${leftText} ${operator}`;
     return;
   }
 
-  // Remove the last value of the string
-  newEquation = equationText.innerText.slice(0, -1);
-  equationText.innerText = newEquation;
+  // Otherwise remove last digit from right side
+  rightText = rightText.slice(0, -1);
+
+  // If right becomes "-" or empty → convert to 0
+  if (rightText === "" || rightText === "-") {
+    rightText = "0";
+  }
+
+  equationText.innerText = `${leftText} ${operator} ${rightText}`;
 }
 
 function clearAll() {
@@ -290,7 +331,56 @@ function addDecimal() {
   }
 }
 
-function toggleSign() {}
+function toggleSign() {
+  let newText = equationText.innerText;
+
+  // If currently 0, just make it negative
+  if (newText === "0") {
+    equationText.innerText = "-0";
+    return;
+  }
+
+  // Find operator
+  let operator = "";
+  let operatorIndex = -1;
+
+  for (let i = 0; i < newText.length; i++) {
+    if (isOperator(newText[i], i)) {
+      operator = newText[i];
+      operatorIndex = i;
+      break;
+    }
+  }
+
+  // If no operator, then toggle whole number
+  if (operator === "") {
+    if (newText.startsWith("-")) {
+      equationText.innerText = newText.slice(1);
+    } else {
+      equationText.innerText = `-${newText}`;
+    }
+    return;
+  }
+
+  // Split into left and right parts
+  let leftText = newText.slice(0, operatorIndex);
+  let rightText = newText.slice(operatorIndex + 2);
+
+  // If no right number yet, toggle 0
+  if (rightText === "") {
+    equationText.innerText = `${leftText} ${operator} -0`;
+    return;
+  }
+
+  // Toggle right number
+  if (rightText.startsWith("-")) {
+    rightText = rightText.slice(1);
+  } else {
+    rightText = "-" + rightText;
+  }
+
+  equationText.innerText = `${leftText} ${operator} ${rightText}`;
+}
 
 function hasOperator() {
   for (let i = 0; i < equationText.innerText.length; i++) {
