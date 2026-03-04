@@ -161,6 +161,12 @@ function operate() {
     return;
   }
 
+  if (operator && right === "") {
+    setText(left);
+    answerText.innerText = formatNumber(left);
+    return;
+  }
+
   if (operator === "÷" && Number(right) === 0) {
     answerText.innerText = "Can't divide by 0!";
     return;
